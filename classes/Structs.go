@@ -14,7 +14,7 @@ type Blockchain struct {
 }
 
 type Transaction struct {
-	RecipientAddress string
-	SenderAddress    string
-	Value            float32
+	recipientAddress string
+	senderAddress    string
+	value            float32
 }

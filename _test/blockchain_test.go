@@ -10,19 +10,14 @@ func TestNewTransaction(t *testing.T) {
 	senderAddress := "Alice"
 	recipientAddress := "Bob"
 	var value float32 = 12.34
-	expected := &classes.Transaction{
-		RecipientAddress: recipientAddress,
-		SenderAddress:    senderAddress,
-		Value:            value,
-	}
 	result := classes.NewTransaction(senderAddress, recipientAddress, value)
 
-	if result.SenderAddress != expected.SenderAddress &&
-		result.RecipientAddress != expected.RecipientAddress &&
-		result.Value != expected.Value {
-		t.Errorf("\"NewTransaction('%s')\" FAILED, expected -> %v, got -> %v", "_", expected, result)
+	if result.SenderAddress() != senderAddress &&
+		result.RecipientAddress() != recipientAddress &&
+		result.Value() != value {
+		t.Errorf("\"NewTransaction('%s')\" FAILED, expected -> %v, got -> %v", "_", classes.NewTransaction(senderAddress, recipientAddress, value), result)
 	} else {
-		t.Logf("\"NewTransaction('%s')\" SUCCEDED, expected -> %v, got -> %v", "_", expected, result)
+		t.Logf("\"NewTransaction('%s')\" SUCCEDED, expected -> %v, got -> %v", "_", classes.NewTransaction(senderAddress, recipientAddress, value), result)
 	}
 }
 
@@ -46,8 +41,8 @@ func TestNewBlockchain(t *testing.T) {
 func TestNewWallet(t *testing.T) {
 	w := wallet.NewWallet()
 
-	if w.PublicKeyStr() != w.PrivateKeyStr() {
-		t.Logf("\"BlockchainWallet\" CREATED, PrivateKey -> %v, PublicKey -> %v", w.PrivateKeyStr(), w.PublicKeyStr())
+	if w.PublicKeyStr() != w.PrivateKeyStr() && len(w.BlockchainAddress()) >= 1 {
+		t.Logf("\"BlockchainWallet\" CREATED, PrivateKey -> %v, PublicKey -> %v, Address -> %v", w.PrivateKeyStr(), w.PublicKeyStr(), w.BlockchainAddress())
 	} else {
 		t.Errorf("Wallet Created Incorrectly")
 	}
