@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+type Blockchain struct {
+	transactionPool   []*Transaction
+	chain             []*Block
+	BlockchainAddress string
+}
+
 func NewBlockchain(blockchainAddress string) *Blockchain {
 	b := &Block{}
 	bc := new(Blockchain)

@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+type Transaction struct {
+	recipientAddress string
+	senderAddress    string
+	value            float32
+}
+
 func NewTransaction(sender, recipient string, value float32) *Transaction {
 	return &Transaction{recipientAddress: recipient, senderAddress: sender, value: value}
 }

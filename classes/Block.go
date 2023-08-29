@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+type Block struct {
+	timestamp    int64
+	nonce        int
+	prevHash     [32]byte
+	transactions []*Transaction
+}
+
 func NewBlock(nonce int, prevHash [32]byte, transactions []*Transaction) *Block {
 
 	b := new(Block)

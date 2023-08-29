@@ -6,20 +6,7 @@ import (
 	"testing"
 )
 
-func TestNewTransaction(t *testing.T) {
-	senderAddress := "Alice"
-	recipientAddress := "Bob"
-	var value float32 = 12.34
-	result := classes.NewTransaction(senderAddress, recipientAddress, value)
-
-	if result.SenderAddress() != senderAddress &&
-		result.RecipientAddress() != recipientAddress &&
-		result.Value() != value {
-		t.Errorf("\"NewTransaction('%s')\" FAILED, expected -> %v, got -> %v", "_", classes.NewTransaction(senderAddress, recipientAddress, value), result)
-	} else {
-		t.Logf("\"NewTransaction('%s')\" SUCCEDED, expected -> %v, got -> %v", "_", classes.NewTransaction(senderAddress, recipientAddress, value), result)
-	}
-}
+///
 
 func TestNewBlockchain(t *testing.T) {
 	blockchainAddress := "konosuba"
@@ -45,5 +32,24 @@ func TestNewWallet(t *testing.T) {
 		t.Logf("\"BlockchainWallet\" CREATED, PrivateKey -> %v, PublicKey -> %v, Address -> %v", w.PrivateKeyStr(), w.PublicKeyStr(), w.BlockchainAddress())
 	} else {
 		t.Errorf("Wallet Created Incorrectly")
+	}
+}
+
+func TestNewTransaction(t *testing.T) {
+	w := wallet.NewWallet()
+
+	transaction := w.NewTransaction(w.BlockchainAddress(), "Bob", 1.0, w.PrivateKey(), w.PublicKey())
+	signature := transaction.GenerateSignature()
+
+	if len(signature.String()) >= 1 {
+		t.Logf("\"Transaction\" SUCCESFUL, Signature -> %v", signature)
+	} else {
+		t.Errorf("\"Transaction\" ERROR, Signature -> %v", signature)
+	}
+
+	if transaction.RecipientAddress() == "Bob" {
+		t.Logf("\"Transaction\" SUCCESFUL, RecipientAddress -> %v", transaction.RecipientAddress())
+	} else {
+		t.Errorf("\"Transaction\" ERROR, Signature -> %v", signature)
 	}
 }
