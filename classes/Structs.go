@@ -10,7 +10,7 @@ type Block struct {
 type Blockchain struct {
 	transactionPool   []*Transaction
 	chain             []*Block
-	blockchainAddress string
+	BlockchainAddress string
 }
 
 type Transaction struct {

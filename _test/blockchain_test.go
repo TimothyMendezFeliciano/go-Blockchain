@@ -24,3 +24,20 @@ func TestNewTransaction(t *testing.T) {
 		t.Logf("\"NewTransaction('%s')\" SUCCEDED, expected -> %v, got -> %v", "_", expected, result)
 	}
 }
+
+func TestNewBlockchain(t *testing.T) {
+	blockchainAddress := "konosuba"
+	nonce := 12
+
+	b := &classes.Block{}
+
+	bcExpected := new(classes.Blockchain)
+	bcExpected.BlockchainAddress = blockchainAddress
+	bcExpected.CreateBlock(nonce, b.Hash())
+
+	result := classes.NewBlockchain(blockchainAddress)
+
+	if result.BlockchainAddress == bcExpected.BlockchainAddress {
+		t.Logf("\"BlockchainAddrees('%s')\" SUCCEDED, expected -> %v, got -> %v", "_", bcExpected, result)
+	}
+}

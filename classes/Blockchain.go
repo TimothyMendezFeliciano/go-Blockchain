@@ -10,7 +10,7 @@ import (
 func NewBlockchain(blockchainAddress string) *Blockchain {
 	b := &Block{}
 	bc := new(Blockchain)
-	bc.blockchainAddress = blockchainAddress
+	bc.BlockchainAddress = blockchainAddress
 	bc.CreateBlock(0, b.Hash())
 	return bc
 }
@@ -72,7 +72,7 @@ func (bc *Blockchain) Print() {
 }
 
 func (bc *Blockchain) Mining() bool {
-	bc.AddTransaction(constants.MINING_SENDER, bc.blockchainAddress, constants.MINING_REWARD)
+	bc.AddTransaction(constants.MINING_SENDER, bc.BlockchainAddress, constants.MINING_REWARD)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
