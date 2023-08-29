@@ -2,6 +2,7 @@ package _test
 
 import (
 	"go-blockchain/classes"
+	"go-blockchain/wallet"
 	"testing"
 )
 
@@ -38,6 +39,16 @@ func TestNewBlockchain(t *testing.T) {
 	result := classes.NewBlockchain(blockchainAddress)
 
 	if result.BlockchainAddress == bcExpected.BlockchainAddress {
-		t.Logf("\"BlockchainAddrees('%s')\" SUCCEDED, expected -> %v, got -> %v", "_", bcExpected, result)
+		t.Logf("\"BlockchainAddress('%s')\" SUCCEDED, expected -> %v, got -> %v", "_", bcExpected, result)
+	}
+}
+
+func TestNewWallet(t *testing.T) {
+	w := wallet.NewWallet()
+
+	if w.PublicKeyStr() != w.PrivateKeyStr() {
+		t.Logf("\"BlockchainWallet\" CREATED, PrivateKey -> %v, PublicKey -> %v", w.PrivateKeyStr(), w.PublicKeyStr())
+	} else {
+		t.Errorf("Wallet Created Incorrectly")
 	}
 }
