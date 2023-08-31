@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"go-blockchain/classes"
 	"go-blockchain/utils"
 	"go-blockchain/wallet"
 	"html/template"
@@ -58,7 +61,57 @@ func (ws *WalletServer) Wallet(w http.ResponseWriter, req *http.Request) {
 func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case http.MethodPost:
-		io.WriteString(w, string(utils.JsonStatus("success")))
+		decoder := json.NewDecoder(req.Body)
+		var t wallet.TransactionRequest
+		error := decoder.Decode(&t)
+
+		if error != nil {
+			log.Printf("ERROR: %v", error)
+			io.WriteString(w, string(utils.JsonStatus("fail")))
+			return
+		}
+		if !t.Validate() {
+			log.Printf("ERROR: %v", error)
+			io.WriteString(w, string(utils.JsonStatus("fail")))
+			return
+		}
+
+		publicKey := utils.PublicKeyFromString(*t.SenderPublicKey)
+		privateKey := utils.PrivateKeyFromString(*t.SenderPrivateKey, publicKey)
+		value, err := strconv.ParseFloat(*t.Value, 32)
+		if err != nil {
+			log.Println("Error: Parsing Error")
+			io.WriteString(w, string(utils.JsonStatus("Failed to Parse Transaction")))
+			return
+		}
+
+		value32 := float32(value)
+
+		w.Header().Add("Content-Type", "application/json")
+
+		transaction := wallet.NewTransaction(*t.SenderBlockchainAddress, *t.RecipientBlockchainAddress, value32, privateKey, publicKey)
+		signature := transaction.GenerateSignature()
+		signatureString := signature.String()
+
+		blockTransaction := &classes.TransactionRequest{
+			t.SenderBlockchainAddress,
+			t.RecipientBlockchainAddress,
+			t.SenderPublicKey,
+			&value32,
+			&signatureString,
+		}
+
+		m, _ := json.Marshal(blockTransaction)
+
+		buff := bytes.NewBuffer(m)
+		response, _ := http.Post(ws.Gateway()+"/transactions", "application/json", buff)
+
+		if response.StatusCode == 201 {
+			io.WriteString(w, string(utils.JsonStatus("success")))
+			return
+		}
+		io.WriteString(w, string(utils.JsonStatus("fail")))
+
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		log.Println("Error: Invalid HTTP Method")
@@ -68,6 +121,6 @@ func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, req *http.Reque
 func (ws *WalletServer) Run() {
 	http.HandleFunc("/", ws.Index)
 	http.HandleFunc("/wallet", ws.Wallet)
-	http.HandleFunc("/transaction", ws.CreateTransaction)
+	http.HandleFunc("/transactions", ws.CreateTransaction)
 	log.Println(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(ws.Port())), nil))
 }

@@ -15,14 +15,36 @@ type Blockchain struct {
 	transactionPool   []*Transaction
 	chain             []*Block
 	BlockchainAddress string
+	port              uint16
 }
 
-func NewBlockchain(blockchainAddress string) *Blockchain {
+type TransactionRequest struct {
+	SenderBlockchainAddress    *string  `json:"sender_blockchain_address"`
+	RecipientBlockchainAddress *string  `json:"recipient_blockchain_address"`
+	SenderPublicKey            *string  `json:"sender_public_key"`
+	Value                      *float32 `json:"value"`
+	Signature                  *string  `json:"signature"`
+}
+
+func NewBlockchain(blockchainAddress string, port uint16) *Blockchain {
 	b := &Block{}
 	bc := new(Blockchain)
 	bc.BlockchainAddress = blockchainAddress
 	bc.CreateBlock(0, b.Hash())
+	bc.port = port
 	return bc
+}
+
+func (bc *Blockchain) TransactionPool() []*Transaction {
+	return bc.transactionPool
+}
+
+func (bc *Blockchain) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Blocks []*Block `json:"chains"`
+	}{
+		Blocks: bc.chain,
+	})
 }
 
 func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *Block {
@@ -30,6 +52,15 @@ func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	bc.chain = append(bc.chain, b)
 	bc.transactionPool = []*Transaction{}
 	return b
+}
+
+func (bc *Blockchain) CreateTransaction(sender, recipient string, value float32,
+	senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
+	isTransacted := bc.AddTransaction(sender, recipient, value, senderPublicKey, s)
+
+	// TODO
+	// Sync to all the servers
+	return isTransacted
 }
 
 func (bc *Blockchain) AddTransaction(sender, recipient string, value float32,
@@ -132,4 +163,12 @@ func (bc *Blockchain) CalculateTotalAmount(address string) float32 {
 	}
 
 	return totalAmount
+}
+
+func (tr *TransactionRequest) Validate() bool {
+	return tr.RecipientBlockchainAddress != nil ||
+		tr.SenderPublicKey != nil ||
+		tr.Signature != nil ||
+		tr.Value != nil ||
+		tr.SenderBlockchainAddress != nil
 }
