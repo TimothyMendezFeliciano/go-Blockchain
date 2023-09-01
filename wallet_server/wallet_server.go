@@ -64,10 +64,10 @@ func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, req *http.Reque
 	case http.MethodPost:
 		decoder := json.NewDecoder(req.Body)
 		var t wallet.TransactionRequest
-		error := decoder.Decode(&t)
+		err := decoder.Decode(&t)
 
-		if error != nil {
-			log.Printf("ERROR: decoded value %v", error)
+		if err != nil {
+			log.Printf("ERROR: decoded value %v", err)
 			io.WriteString(w, string(utils.JsonStatus("fail")))
 			return
 		}
@@ -131,10 +131,10 @@ func (ws *WalletServer) WalletAmount(w http.ResponseWriter, req *http.Request) {
 		query.Add("blockchain_address", blockchainAddress)
 		bcsRequest.URL.RawQuery = query.Encode()
 
-		bcsResponse, error := client.Do(bcsRequest)
+		bcsResponse, err := client.Do(bcsRequest)
 
-		if error != nil {
-			log.Printf("Error: %v", error)
+		if err != nil {
+			log.Printf("Error: %v", err)
 			io.WriteString(w, string(utils.JsonStatus("Failed to Get Wallet Amount")))
 			return
 		}
@@ -144,9 +144,9 @@ func (ws *WalletServer) WalletAmount(w http.ResponseWriter, req *http.Request) {
 		if bcsResponse.StatusCode == 200 {
 			decoder := json.NewDecoder(bcsResponse.Body)
 			var bar classes.AmountResponse
-			error := decoder.Decode(&bar)
-			if error != nil {
-				log.Printf("Error: %v", error)
+			err := decoder.Decode(&bar)
+			if err != nil {
+				log.Printf("Error: %v", err)
 				io.WriteString(w, string(utils.JsonStatus("Failed to Get Wallet Amount")))
 				return
 			}

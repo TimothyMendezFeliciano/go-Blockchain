@@ -68,9 +68,9 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 	case http.MethodPost:
 		decoder := json.NewDecoder(req.Body)
 		var transaction classes.TransactionRequest
-		error := decoder.Decode(&transaction)
-		if error != nil {
-			log.Printf("Error: %v", error)
+		err := decoder.Decode(&transaction)
+		if err != nil {
+			log.Printf("Error: %v", err)
 			io.WriteString(w, "Failed to Call Transactions")
 			return
 		}
@@ -98,7 +98,43 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 			message = utils.JsonStatus("Transaction Succesful")
 		}
 		io.WriteString(w, string(message))
+	case http.MethodPut:
+		decoder := json.NewDecoder(req.Body)
+		var transaction classes.TransactionRequest
+		err := decoder.Decode(&transaction)
+		if err != nil {
+			log.Printf("Error: %v", err)
+			io.WriteString(w, "Failed to Call Transactions")
+			return
+		}
 
+		if !transaction.Validate() {
+			log.Printf("Missing fields")
+			io.WriteString(w, "Failed to Call Transactions")
+			return
+		}
+
+		publicKey := utils.PublicKeyFromString(*transaction.SenderPublicKey)
+		signature := utils.SignatureFromString(*transaction.Signature)
+
+		bc := bcs.GetBlockchain()
+		isUpdated := bc.AddTransaction(*transaction.SenderBlockchainAddress, *transaction.RecipientBlockchainAddress,
+			*transaction.Value, publicKey, signature)
+
+		w.Header().Add("Content-Type", "application/json")
+		var message []byte
+		if !isUpdated {
+			w.WriteHeader(http.StatusBadRequest)
+			message = utils.JsonStatus("Bad Request")
+		} else {
+			w.WriteHeader(http.StatusCreated)
+			message = utils.JsonStatus("Transaction Succesful")
+		}
+		io.WriteString(w, string(message))
+	case http.MethodDelete:
+		bc := bcs.GetBlockchain()
+		bc.ClearTransactionPool()
+		io.WriteString(w, string(utils.JsonStatus("Pool Cleared")))
 	default:
 		log.Println("ERROR: Incorrect Methods")
 		w.WriteHeader(http.StatusBadRequest)
@@ -159,6 +195,7 @@ func (bcs *BlockchainServer) Amount(w http.ResponseWriter, req *http.Request) {
 }
 
 func (bcs *BlockchainServer) Run() {
+	bcs.GetBlockchain().Run()
 	http.HandleFunc("/", bcs.GetChain)
 	http.HandleFunc("/transactions", bcs.Transactions)
 	http.HandleFunc("/mine", bcs.Mine)
