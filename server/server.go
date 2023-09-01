@@ -194,12 +194,31 @@ func (bcs *BlockchainServer) Amount(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (bcs *BlockchainServer) Consensus(w http.ResponseWriter, request *http.Request) {
+	switch request.Method {
+	case http.MethodGet:
+		bc := bcs.GetBlockchain()
+		replaced := bc.ResolveConflicts()
+
+		w.Header().Add("Content-Type", "application/json")
+		if replaced {
+			io.WriteString(w, "Longest Chain Replaced")
+		} else {
+			io.WriteString(w, "Longest Chain Remains")
+		}
+	default:
+		log.Println("Error: Incorrect Methods")
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
 func (bcs *BlockchainServer) Run() {
 	bcs.GetBlockchain().Run()
-	http.HandleFunc("/", bcs.GetChain)
+	http.HandleFunc("/chain", bcs.GetChain)
 	http.HandleFunc("/transactions", bcs.Transactions)
 	http.HandleFunc("/mine", bcs.Mine)
 	http.HandleFunc("/mine/start", bcs.StartMine)
 	http.HandleFunc("/amount", bcs.Amount)
+	http.HandleFunc("/consensus", bcs.Consensus)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcs.Port())), nil))
 }
