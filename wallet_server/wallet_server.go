@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"go-blockchain/classes"
 	"go-blockchain/utils"
 	"go-blockchain/wallet"
@@ -118,9 +119,59 @@ func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, req *http.Reque
 	}
 }
 
+func (ws *WalletServer) WalletAmount(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		blockchainAddress := req.URL.Query().Get("blockchain_address")
+		endpoint := fmt.Sprintf("%s/amount", ws.Gateway())
+
+		client := &http.Client{}
+		bcsRequest, _ := http.NewRequest("GET", endpoint, nil)
+		query := bcsRequest.URL.Query()
+		query.Add("blockchain_address", blockchainAddress)
+		bcsRequest.URL.RawQuery = query.Encode()
+
+		bcsResponse, error := client.Do(bcsRequest)
+
+		if error != nil {
+			log.Printf("Error: %v", error)
+			io.WriteString(w, string(utils.JsonStatus("Failed to Get Wallet Amount")))
+			return
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+
+		if bcsResponse.StatusCode == 200 {
+			decoder := json.NewDecoder(bcsResponse.Body)
+			var bar classes.AmountResponse
+			error := decoder.Decode(&bar)
+			if error != nil {
+				log.Printf("Error: %v", error)
+				io.WriteString(w, string(utils.JsonStatus("Failed to Get Wallet Amount")))
+				return
+			}
+
+			m, _ := json.Marshal(struct {
+				Message string  `json:"message"`
+				Amount  float32 `json:"amount"`
+			}{
+				Message: "Success",
+				Amount:  bar.Amount,
+			})
+			io.WriteString(w, string(m[:]))
+		} else {
+			io.WriteString(w, string(utils.JsonStatus("Failure")))
+		}
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println("Error: Invalid HTTP Method")
+	}
+}
+
 func (ws *WalletServer) Run() {
 	http.HandleFunc("/", ws.Index)
 	http.HandleFunc("/wallet", ws.Wallet)
+	http.HandleFunc("/wallet/amount", ws.WalletAmount)
 	http.HandleFunc("/transactions", ws.CreateTransaction)
 	log.Println(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(ws.Port())), nil))
 }
