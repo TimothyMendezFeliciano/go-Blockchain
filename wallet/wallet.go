@@ -120,9 +120,13 @@ func (w *Wallet) MarshalJSON() ([]byte, error) {
 }
 
 func (tr *TransactionRequest) Validate() bool {
-	return tr.RecipientBlockchainAddress == nil ||
+	if tr.RecipientBlockchainAddress == nil ||
 		tr.SenderBlockchainAddress == nil ||
 		tr.SenderPrivateKey == nil ||
 		tr.SenderPublicKey == nil ||
-		tr.Value == nil
+		tr.Value == nil {
+		return false
+	} else {
+		return true
+	}
 }
