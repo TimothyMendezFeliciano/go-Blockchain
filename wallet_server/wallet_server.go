@@ -66,12 +66,12 @@ func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, req *http.Reque
 		error := decoder.Decode(&t)
 
 		if error != nil {
-			log.Printf("ERROR: %v", error)
+			log.Printf("ERROR: decoded value %v", error)
 			io.WriteString(w, string(utils.JsonStatus("fail")))
 			return
 		}
 		if !t.Validate() {
-			log.Printf("ERROR: %v", error)
+			log.Printf("ERROR: Invalid value %v", t)
 			io.WriteString(w, string(utils.JsonStatus("fail")))
 			return
 		}
@@ -121,6 +121,6 @@ func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, req *http.Reque
 func (ws *WalletServer) Run() {
 	http.HandleFunc("/", ws.Index)
 	http.HandleFunc("/wallet", ws.Wallet)
-	http.HandleFunc("/transactions", ws.CreateTransaction)
+	http.HandleFunc("/transaction", ws.CreateTransaction)
 	log.Println(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(ws.Port())), nil))
 }
