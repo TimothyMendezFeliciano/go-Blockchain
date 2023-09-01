@@ -9,6 +9,8 @@ import (
 	"go-blockchain/utils"
 	"log"
 	"strings"
+	"sync"
+	"time"
 )
 
 type Blockchain struct {
@@ -16,6 +18,7 @@ type Blockchain struct {
 	chain             []*Block
 	BlockchainAddress string
 	port              uint16
+	mux               sync.Mutex
 }
 
 type TransactionRequest struct {
@@ -24,6 +27,16 @@ type TransactionRequest struct {
 	SenderPublicKey            *string  `json:"sender_public_key"`
 	Value                      *float32 `json:"value"`
 	Signature                  *string  `json:"signature"`
+}
+
+type AmountResponse struct {
+	Amount float32 `json:"amount"`
+}
+
+func (ar *AmountResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Amount float32 `json:"amount"`
+	}{Amount: ar.Amount})
 }
 
 func NewBlockchain(blockchainAddress string, port uint16) *Blockchain {
@@ -137,6 +150,12 @@ func (bc *Blockchain) Print() {
 }
 
 func (bc *Blockchain) Mining() bool {
+	bc.mux.Lock()
+	defer bc.mux.Unlock()
+
+	if len(bc.transactionPool) == 0 {
+		return false
+	}
 	bc.AddTransaction(constants.MINING_SENDER, bc.BlockchainAddress, constants.MINING_REWARD, nil, nil)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LastBlock().Hash()
@@ -145,6 +164,11 @@ func (bc *Blockchain) Mining() bool {
 	log.Println("action=mining, status=success")
 
 	return true
+}
+
+func (bc *Blockchain) StartMining() {
+	bc.Mining()
+	_ = time.AfterFunc(time.Second*constants.MINING_TIMER_SEC, bc.StartMining)
 }
 
 func (bc *Blockchain) CalculateTotalAmount(address string) float32 {
